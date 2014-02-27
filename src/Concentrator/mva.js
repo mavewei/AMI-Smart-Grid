@@ -8,6 +8,8 @@ Date:		Feb, 2014
 
 /*external configuration*/
 var config = require('./config/setting.js');
+var db = require('./config/database.js');
+var functions = require('./functions/functions.js');
 var jsonSocket = require('json-socket');
 var key_m = require('./config/key_m.js');
 var moment = require('moment');
@@ -41,15 +43,20 @@ net.createServer(function(connection) {
 					if(config.debug) {
 						console.log('[' + date_t + '] [IFO] *Key of Meter "' + message.m_uid + '" was received from Key-Management Server.');
 					}
-					socket.sendMessage({
-						status: response.status, m_key: response.m_key, m_passwd: response.m_passwd, s_key: response.s_key
-					})
+					functions.insert_meter_infor(db.host, db.name, db.userid, db.passwd, message.m_uid, message.m_manufacturer,
+						message.m_model, message.m_hwver, message.m_fwver, message.c_uid, message.c_manufacturer, message.c_model,
+						message.c_hwver, message.c_fwver, response.m_key, response.m_passwd, response.s_key, function(callback) {
+							if(callback) {
+								socket.sendMessage({
+									status: response.status, m_key: response.m_key, m_passwd: response.m_passwd, s_key: response.s_key
+								});
+							}
+					});
 				}
 			}
-
 		});
-
 	});
+
 	socket.on('error', function(err) {
 		console.log('Caught Flash policy server socket error: ');
 		console.log(err.stack);
