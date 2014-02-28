@@ -93,12 +93,18 @@ function main() {
 							console.log('[' + date_t + '] [ERR] *MDFS Server cannot connected.');
 						}
 					} else {
-						console.log(response.status);
+						/*Meter data was uploaded to MDFS server*/
+						if(response.status == 'SUC') {
+							if(config.debug) {
+								if(config.debug) {
+									console.log('[' + date_t + '] [SUC] *Meter data uploaded successful (del_kwh:' + del_kwh + ').');
+								}
+							}
+						}
 					}
 				});
 			}
 		});
-
 	}
 }
 
@@ -107,4 +113,33 @@ function main() {
 		main();
 		run();
 	}, sim_set.normal_interval * 1000);
+}());
+/*midnight meter data generator*/
+(function midnight_run() {
+    var now = new Date();
+    var hours = now.getHours();
+    var minutes = now.getMinutes();
+    var seconds = now.getSeconds();
+    if(hours < 10) {
+		hours = '0' + hours;
+	}
+    if(minutes < 10) {
+		minutes = '0' + minutes;
+	}
+	if(seconds < 10) {
+		seconds = '0' + seconds;
+	}
+    if((hours == '00') && (minutes == '00') && (seconds == '00')) {
+    	functions.generate_midnight(db.host, db.name, db.userid, db.passwd, meter.meter_uid, function(callback) {
+    		if(callback) {
+    			if(config.debug) {
+    				console.log('[' + now + '] [IFO] *** NEW DAY ***');
+    			}
+    		}
+    	});
+    }
+
+    setTimeout(function() {
+    	midnight_run();
+    }, 1000);
 }());
